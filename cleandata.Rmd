@@ -1,0 +1,620 @@
+---
+title: "cleandata_final"
+author: "Carlos Crespín"
+date: "2024-10-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rio)
+library(dplyr)
+library(magrittr)
+library(tidyr)
+```
+
+# SIUP
+
+## SIUP 2019
+```{r}
+c100_2019=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2019/SIUP2019_c100_LISTO.xlsx")
+c100_2019=select(c100_2019, c(1:5, 86))
+names(c100_2019)=c("ID_N","Departamento","Provincia","Distrito","Comisaria","total_personal")
+```
+
+```{r}
+c200_2019=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2019/SIUP2019_c200_LISTO.xlsx")
+c200_2019=select(c200_2019, c(1,8:9,12))
+names(c200_2019)=c("ID_N","area","old","internet")
+c200_2019$internet <- ifelse(c200_2019$internet == 2, 0, c200_2019$internet)
+```
+
+```{r}
+setdiff(c100_2019$ID_N,c200_2019$ID_N)
+```
+
+```{r}
+SIUP2019_c200=inner_join(c100_2019, c200_2019)
+```
+
+```{r}
+c600_2019=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2019/SIUP2019_c600_LISTO.xlsx")
+c600_2019=c600_2019%>%
+  mutate(patrullaje=pat_m_pie+pat_m_car+pat_m_bike+pat_t_pie+pat_t_car+pat_t_bike+pat_n_pie+pat_n_car+pat_n_bike)
+c600_2019=c600_2019%>%
+  mutate(pat_int=patin_m_car+patin_m_suv+patin_t_car+patin_t_suv+patin_n_car+patin_n_suv)
+c600_2019$codisec <- ifelse(c600_2019$codisec == 2, 0, c600_2019$codisec)
+c600_2019$codisec <- ifelse(c600_2019$codisec == 2, 0, c600_2019$codisec)
+c600_2019$prev_com <- ifelse(c600_2019$prev_com == 2, 0, c600_2019$prev_com)
+c600_2019=select(c600_2019, c(1:3,19:25))
+```
+
+```{r}
+SIUP2019=inner_join(SIUP2019_c200, c600_2019)
+```
+```{r}
+SIUP2019=SIUP2019%>%
+  mutate(pat_fix=patrullaje/30)
+SIUP2019=SIUP2019%>%
+  mutate(pat_int_fix=pat_int/30)
+```
+
+```{r}
+export(SIUP2019, "SIUP2019.xlsx")
+```
+
+```{r}
+SIUP2019 <- SIUP2019 %>%
+  mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
+```
+
+```{r}
+SIUP2019 <- SIUP2019 %>%
+  group_by(UBICACION) %>%
+  summarise(
+    num_comisarias = n(),                  
+    personal = sum(total_personal, na.rm = TRUE),
+    area_com=sum(area, na.rm = TRUE),
+    old_com=sum(old, na.rm = TRUE),
+    com_internet=sum(internet, na.rm = TRUE),
+    nreu_codisec=sum(n_codisec, na.rm = TRUE), 
+    juntas=sum(n_juntas, na.rm = TRUE),
+    per_juntas=sum(np_juntas, na.rm = TRUE),
+    redes=sum(n_red, na.rm=TRUE),
+    per_redes=sum(np_red, na.rm = TRUE),
+    n_patru=sum(patrullaje, na.rm = TRUE),
+    n_pat_int=sum(pat_int, na.rm = TRUE)
+  )
+```
+
+## SIUP 2020
+
+```{r}
+siupiden=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2020/SIUP2020_iden.xlsx")
+c100_2020=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2020/SIUP2020_c100_LISTO.xlsx")
+```
+
+```{r}
+setdiff(siupiden$COD_CPNP,c100_2020$COD_CPNP)
+```
+
+```{r}
+setdiff(c100_2020$COD_CPNP,siupiden$COD_CPNP)
+```
+
+
+```{r}
+SIUP2020_c100=merge(siupiden, c100_2020)
+names(SIUP2020_c100)=c("COD_CPNP","Departamento","Provincia","Distrito","nombre_unidadp","total_personal")
+```
+
+```{r}
+c200_2020=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2020/SIUP2020_c200_LISTO.xlsx")
+```
+
+### Cuestionario 200
+
+```{r}
+SIUP2020_c200=merge(SIUP2020_c100, c200_2020)
+```
+
+### Cuestionario 600
+
+```{r}
+c600_2020=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2020/SIUP2020_c600_LISTO.xlsx")
+```
+
+```{r}
+names(c600_2020)
+```
+
+```{r}
+#patrullaje normal
+c600_2020=c600_2020%>%
+  mutate(patrullaje2020=pat_m_pie+pat_m_car+pat_m_suv+pat_m_bike+pat_t_pie+pat_t_car+pat_t_suv+pat_t_bike+pat_n_pie+pat_n_car+pat_n_suv+pat_n_bike)
+```
+
+```{r}
+#patrullaje integrado
+c600_2020=c600_2020%>%
+  mutate(pat_in_2020=patin_m_car+patin_m_suv+patin_t_car+patin_t_suv+patin_n_car+patin_n_suv)
+```
+
+```{r}
+c600_2020=select(c600_2020, c(1:2, 23:29))
+```
+
+```{r}
+SIUP_2020=merge(SIUP2020_c200, c600_2020)
+SIUP_2020=select(SIUP_2020, c(1:9, 12:19))
+```
+
+```{r}
+export(SIUP_2020, "SIUP2020.xlsx")
+``` 
+
+```{r}
+SIUP2020=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2020/SIUP2020.xlsx")
+```
+
+```{r}
+SIUP2020 <- SIUP2020 %>%
+  mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
+```
+
+```{r}
+SIUP2020 <- SIUP2020 %>%
+  group_by(UBICACION) %>%
+  summarise(
+    num_comisarias = n(),                  
+    personal = sum(total_personal, na.rm = TRUE),
+    area_com=sum(area, na.rm = TRUE),
+    old_com=sum(old, na.rm = TRUE),
+    com_internet=sum(internet, na.rm = TRUE),
+    nreu_codisec=sum(n_codisec, na.rm = TRUE), 
+    juntas=sum(n_juntas, na.rm = TRUE),
+    per_juntas=sum(np_juntas, na.rm = TRUE),
+    redes=sum(n_redes, na.rm=TRUE),
+    per_redes=sum(np_redes, na.rm = TRUE),
+    n_patru=sum(patrullaje, na.rm = TRUE),
+    n_pat_int=sum(pat_int, na.rm = TRUE)
+  )
+```
+
+## SIUP 2021
+
+```{r}
+nombres=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2021/m_unidad_policial.xlsx")
+c100_2021=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2021/SIUP2021_c100_LISTO.xlsx")
+names(c100_2021)=c("id_unidad_policial","total_personal")
+```
+
+```{r}
+setdiff(c100_2021$id_unidad_policial, nombres$id_unidad_policial)
+```
+
+```{r}
+SIUP2021_c100=merge(nombres, c100_2021)
+```
+
+```{r}
+c200_2021=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2021/SIUP2021_c200_LISTO.xlsx")
+names(c200_2021)=c("id_unidad_policial","propiedad","area","old","internet")
+```
+
+```{r}
+setdiff(c200_2021$id_unidad_policial, SIUP2021_c100$id_unidad_policial)
+```
+```{r}
+SIUP2021_c200=merge(SIUP2021_c100, c200_2021)
+```
+
+
+```{r}
+c600_2021=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2021/SIUP2021_c600_LISTO.xlsx")
+```
+
+```{r}
+c600_2021 <- c600_2021 %>%
+  mutate(across(where(is.character), as.numeric))
+c600_2021=c600_2021%>%
+  mutate(patrullaje=pat_m_pie+pat_m_car+pat_m_suv+pat_m_bike+pat_t_pie+pat_t_car+pat_t_suv+pat_t_bike+pat_n_pie+pat_n_car+pat_n_suv+pat_n_bike)
+c600_2021=c600_2021%>%
+  mutate(pat_int=patin_m_car+patin_m_suv+patin_t_car+patin_t_suv+patin_n_car+patin_n_suv)
+c600_2021=select(c600_2021,c(1,3:4,23:29))
+c600_2021$codisec <- ifelse(c600_2021$codisec == 2, 0, c600_2021$codisec)
+c600_2021$prev_com <- ifelse(c600_2021$prev_com == 2, 0, c600_2021$prev_com)
+```
+
+```{r}
+SIUP2021=merge(SIUP2021_c200, c600_2021)
+```
+
+```{r}
+export(SIUP2021, "SIUP2021.xlsx")
+```
+
+```{r}
+SIUP2021 <- SIUP2021 %>%
+  mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
+```
+
+```{r}
+SIUP2021 <- SIUP2021 %>%
+  group_by(UBICACION) %>%
+  summarise(
+    num_comisarias = n(),                  
+    personal = sum(total_personal, na.rm = TRUE),
+    area_com=sum(area, na.rm = TRUE),
+    old_com=sum(old, na.rm = TRUE),
+    com_internet=sum(internet, na.rm = TRUE),
+    nreu_codisec=sum(n_codisec, na.rm = TRUE), 
+    juntas=sum(n_juntas, na.rm = TRUE),
+    per_juntas=sum(np_juntas, na.rm = TRUE),
+    redes=sum(n_redes, na.rm=TRUE),
+    per_redes=sum(np_redes, na.rm = TRUE),
+    n_patru=sum(patrullaje, na.rm = TRUE),
+    n_pat_int=sum(pat_int, na.rm = TRUE)
+  )
+```
+
+# SIDPOL
+
+```{r}
+extorsion=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIDPOL/SIDPOL.csv")
+```
+
+```{r}
+prueba2 <- extorsion %>%
+  mutate(UBICACION = paste(DPTO_HECHO_NEW, PROV_HECHO, DIST_HECHO, sep = "+"))
+prueba2=prueba2%>%
+  group_by(ANIO, UBICACION)%>%
+  summarise(denuncias=sum(CANTIDAD))
+```
+```{r}
+extor2019=filter(prueba2, ANIO=="2019")
+extor2020=filter(prueba2, ANIO=="2020")
+extor2021=filter(prueba2, ANIO=="2021")
+```
+
+# RENAMU
+
+```{r}
+#importe de la data
+renamu2019=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/RENAMU/renamu2019/renamu2019.csv")
+renamu2020=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/RENAMU/renamu2020/renamu2020.csv")
+renamu2021=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/RENAMU/renamu2021/renamu2021.csv")
+```
+
+```{r}
+#añadiré la variable UBICACION
+#primero con 2019
+renamu2019 <- renamu2019 %>%
+  mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
+#ahora con 2020
+renamu2020 <- renamu2020 %>%
+  mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
+#por ultimo con 2021
+renamu2021 <- renamu2021 %>%
+  mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
+```
+
+```{r}
+# Lo que haré acá es crear la columna vehiculo y listuki
+#el orden de siempre
+renamu2019 <- renamu2019 %>%
+  mutate(n_vehi = rowSums(select(., P70A_1_1, P70A_2_1, P70A_3_1, P70A_4_1, P70A_5_1), na.rm = TRUE))
+# ahora 2020
+renamu2020 <- renamu2020 %>%
+  mutate(n_vehi = rowSums(select(., P70A_1_1, P70A_2_1, P70A_3_1, P70A_4_1, P70A_5_1), na.rm = TRUE))
+#el ultimo
+renamu2021 <- renamu2021 %>%
+  mutate(n_vehi = rowSums(select(., P70A_1_1, P70A_2_1, P70A_3_1, P70A_4_1, P70A_5_1), na.rm = TRUE))
+```
+
+```{r}
+renamu2019=select(renamu2019, c(10, 4, 11))
+renamu2020=select(renamu2020, c(10, 4, 11))
+renamu2021=select(renamu2021, c(10, 4, 11))
+```
+
+```{r}
+names(renamu2019)=c("UBICACION", "serenazgos", "n_vehi")
+names(renamu2020)=c("UBICACION", "serenazgos", "n_vehi")
+names(renamu2019)=c("UBICACION", "serenazgos", "n_vehi")
+```
+
+# ENAPRES
+
+```{r}
+confianza2019=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/ENAPRES/enapres2019/enapres2019.xlsx")
+confianza2020=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/ENAPRES/enapres2020/enapres2020.csv")
+confianza2021=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/ENAPRES/enapres2021/enapres2021.csv")
+```
+
+```{r}
+names(confianza2019)
+```
+
+```{r}
+confianza2019=filter(confianza2019, !is.na(PNP))
+confianza2020=filter(confianza2020, !is.na(PNP))
+confianza2021=filter(confianza2021, !is.na(PNP))
+```
+
+
+```{r}
+confianza2019 <- confianza2019 %>%
+  mutate(UBICACION = paste(NOMBREDD, NOMBREPP, NOMBREDI, sep = "+"))
+confianza2020 <- confianza2020 %>%
+  mutate(UBICACION = paste(NOMBREDD, NOMBREPP, NOMBREDI, sep = "+"))
+confianza2021 <- confianza2021 %>%
+  mutate(UBICACION = paste(NOMBREDD, NOMBREPP, NOMBREDI, sep = "+"))
+```
+
+```{r}
+#2019
+confianza2019 <- confianza2019 %>%
+  group_by(UBICACION) %>%
+  summarise(
+    conf_pnp=mean(PNP),
+    conf_muni=mean(MUNI),
+    conf_pj=mean(PJ),
+    conf_mpfn=mean(MPFN)
+      )
+#2020
+confianza2020 <- confianza2020 %>%
+  group_by(UBICACION) %>%
+  summarise(
+    conf_pnp=mean(PNP),
+    conf_muni=mean(MUNI),
+    conf_pj=mean(PJ),
+    conf_mpfn=mean(MPFN)
+      )
+#2021
+confianza2021 <- confianza2021 %>%
+  group_by(UBICACION) %>%
+  summarise(
+    conf_pnp=mean(PNP),
+    conf_muni=mean(MUNI),
+    conf_pj=mean(PJ),
+    conf_mpfn=mean(MPFN)
+  )
+```
+
+
+```{r}
+#Vamos a redondear todo
+#Empecemos con 2019
+confianza2019 <- confianza2019 %>%
+  mutate(
+    conf_pnp = round(conf_pnp, 2),              
+    conf_muni = round(conf_muni, 2),       
+    conf_pj = round(conf_pj, 2),
+    conf_mpfn=round(conf_mpfn, 2)
+  )
+#Va 2020
+confianza2020 <- confianza2020 %>%
+  mutate(
+    conf_pnp = round(conf_pnp, 2),              
+    conf_muni = round(conf_muni, 2),       
+    conf_pj = round(conf_pj, 2),
+    conf_mpfn=round(conf_mpfn, 2)
+  )
+#por ultimo 2021
+confianza2021 <- confianza2021 %>%
+  mutate(
+    conf_pnp = round(conf_pnp, 2),              
+    conf_muni = round(conf_muni, 2),       
+    conf_pj = round(conf_pj, 2),
+    conf_mpfn=round(conf_mpfn, 2)
+  )
+```
+
+# Unir todo 2019
+
+```{r}
+SIUP2020[SIUP2020$UBICACION=='CUSCO+LA CONVENCIÓN+KIMBIRI','UBICACION']='CUSCO+LA CONVENCION+KIMBIRI'
+extor2020[extor2020$UBICACION=='PIURA+PIURA+26 DE OCTUBRE','UBICACION']='PIURA+PIURA+VEINTISEIS DE OCTUBRE'
+extor2020[extor2020$UBICACION=='LIMA+LIMA+LURIGANCHO - CHOSICA','UBICACION']='LIMA+LIMA+LURIGANCHO'
+```
+
+## Unir siup y renamu
+
+```{r}
+# SIUP+renamu
+renasiup2019=inner_join(SIUP2019, renamu2019)
+```
+## Unir con enapres
+
+```{r}
+rena_sip_enap2019=full_join(renasiup2019, confianza2019, join_by("UBICACION"))
+```
+
+```{r}
+summary(rena_sip_enap2019$conf_pnp)
+summary(rena_sip_enap2019$conf_muni)
+summary(rena_sip_enap2019$conf_pj)
+summary(rena_sip_enap2019$conf_mpfn)
+```
+
+```{r}
+#pnp
+rena_sip_enap2019 <- rena_sip_enap2019 %>%
+  mutate(conf_pnp = replace_na(conf_pnp, 1.98))
+#muni
+rena_sip_enap2019 <- rena_sip_enap2019 %>%
+  mutate(conf_muni = replace_na(conf_muni, 1.88))
+#pj
+rena_sip_enap2019 <- rena_sip_enap2019 %>%
+  mutate(conf_pj = replace_na(conf_pj, 1.56))
+#mpfn
+rena_sip_enap2019 <- rena_sip_enap2019 %>%
+  mutate(conf_mpfn = replace_na(conf_mpfn, 1.55))
+```
+
+## Merge final 2019
+```{r}
+data2019=full_join(rena_sip_enap2019, extor2019, join_by("UBICACION"))
+```
+
+```{r}
+summary(data2019$denuncias)
+```
+
+```{r}
+data2019 <- data2019 %>%
+  mutate(ANIO = replace_na(ANIO, 2019))
+```
+
+# Unir todo 2020
+
+```{r}
+extor2019[extor2019$UBICACION=='LIMA+LIMA+LURIGANCHO - CHOSICA','UBICACION']='LIMA+LIMA+LURIGANCHO'
+extor2019[extor2019$UBICACION=='PIURA+PIURA+26 DE OCTUBRE','UBICACION']='PIURA+PIURA+VEINTISEIS DE OCTUBRE'
+extor2019[extor2019$UBICACION=='UCAYALI+PADRE ABAD+A.VON.HUMBOLDT','UBICACION']='UCAYALI+PADRE ABAD+ALEXANDER VON HUMBOLDT'
+```
+
+```{r}
+# SIUP+renamu
+renasiup2020=inner_join(SIUP2020, renamu2020)
+```
+
+## Unir con enapres
+
+```{r}
+rena_sip_enap2020=full_join(renasiup2020, confianza2020, join_by("UBICACION"))
+```
+
+```{r}
+summary(rena_sip_enap2020$conf_pnp)
+summary(rena_sip_enap2020$conf_muni)
+summary(rena_sip_enap2020$conf_pj)
+summary(rena_sip_enap2020$conf_mpfn)
+```
+
+```{r}
+#pnp
+rena_sip_enap2020 <- rena_sip_enap2020 %>%
+  mutate(conf_pnp = replace_na(conf_pnp, 2.20))
+#muni
+rena_sip_enap2020 <- rena_sip_enap2020 %>%
+  mutate(conf_muni = replace_na(conf_muni, 2.10))
+#pj
+rena_sip_enap2020 <- rena_sip_enap2020 %>%
+  mutate(conf_pj = replace_na(conf_pj, 2.16))
+#mpfn
+rena_sip_enap2020 <- rena_sip_enap2020 %>%
+  mutate(conf_mpfn = replace_na(conf_mpfn, 2.21))
+```
+
+## Merge final 2020
+```{r}
+data2020=full_join(rena_sip_enap2020, extor2020, join_by("UBICACION"))
+```
+
+```{r}
+data2020 <- data2020 %>%
+  mutate(ANIO = replace_na(ANIO, 2020))
+```
+
+```{r}
+summary(data2019$denuncias)
+```
+
+# Unir todo 2021
+
+```{r}
+extor2021[extor2021$UBICACION=='PIURA+PIURA+26 DE OCTUBRE','UBICACION']='PIURA+PIURA+VEINTISEIS DE OCTUBRE'
+extor2021[extor2021$UBICACION=='LIMA+LIMA+LURIGANCHO - CHOSICA','UBICACION']='LIMA+LIMA+LURIGANCHO'
+extor2021[extor2021$UBICACION=='UCAYALI+PADRE ABAD+A.VON.HUMBOLDT','UBICACION']='UCAYALI+PADRE ABAD+ALEXANDER VON HUMBOLDT'
+```
+
+```{r}
+# SIUP+renamu
+renasiup2021=inner_join(SIUP2021, renamu2021)
+```
+
+## Unir con enapres
+
+```{r}
+rena_sip_enap2021=full_join(renasiup2021, confianza2021, join_by("UBICACION"))
+```
+
+```{r}
+summary(rena_sip_enap2021$conf_pnp)
+summary(rena_sip_enap2021$conf_muni)
+summary(rena_sip_enap2021$conf_pj)
+summary(rena_sip_enap2021$conf_mpfn)
+```
+
+```{r}
+#pnp
+rena_sip_enap2021 <- rena_sip_enap2021 %>%
+  mutate(conf_pnp = replace_na(conf_pnp, 2.19))
+#muni
+rena_sip_enap2021 <- rena_sip_enap2021 %>%
+  mutate(conf_muni = replace_na(conf_muni, 2.12))
+#pj
+rena_sip_enap2021 <- rena_sip_enap2021 %>%
+  mutate(conf_pj = replace_na(conf_pj, 2.16))
+#mpfn
+rena_sip_enap2021 <- rena_sip_enap2021 %>%
+  mutate(conf_mpfn = replace_na(conf_mpfn, 2.21))
+```
+
+## Merge final 2019
+```{r}
+data2021=full_join(rena_sip_enap2021, extor2021, join_by("UBICACION"))
+```
+
+```{r}
+data2021 <- data2021 %>%
+  mutate(ANIO = replace_na(ANIO, 2021))
+```
+
+```{r}
+data2021=data2021 %>%
+  rename(serenazgos = P69_2_T)
+```
+
+```{r}
+summary(data2019$denuncias)
+```
+
+# Data Final
+
+```{r}
+data_pre <- rbind(data2019, data2020)
+```
+
+```{r}
+datafinal <- rbind(data_pre, data2021)
+```
+
+# Ajustes finales
+
+```{r}
+datafinal <- datafinal %>%
+  mutate(serenazgos = replace_na(serenazgos, 0))
+```
+
+# Exportacion final
+
+```{r}
+export(datafinal, "datafinal.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
