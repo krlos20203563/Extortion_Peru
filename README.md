@@ -48,3 +48,14 @@ Las variables en cuestión son:
 ## Variable dependiente
 
 - **denuncias** = es el número de denuncias por extorsión ocurrido en cada distrito a nivel nacional.
+
+# Metodología
+
+Se extrajo variables de múltiples bases de datos que registran información sobre seguridad ciudadana a nivel nacional. estas son:
+
+- **SIUP**: Este es el Sistema de Información de Unidades Policiales. Contiene información acerca de las comisarias a nivel nacional, así como el personal y diversas otras variables. Se compone de seis cuestionarios. El cuestionario 100 contiene informacion sobre el personal policial. El cuestionario 200 acerca de la infraestructura de las comisarias. El cuestionario 300 contiene información acerca del equipamiento policial según cada comsiaría. El 400 y el 500 son cuestionarios sobre el mantenimiento del equipamiento y la infraestructura, respectivamente. Por último, el cuestionario 600 contiene información sobre acciones de prevención comunitaria y articulación interinstitucional.
+- **ENAPRES**: Esta es la Encuesta Nacional de Programas Presupuestales. Se realiza por parte del INEI en colaboración con el MEF para así realizar asignaciones presupuestarias según el sector. De esta base de extrajo información acerca de la confianza en la policía y demás instituciones encargadas de la seguridad ciudadana.
+- **RENAMU**: es el Registro Nacional de Municipalidades. Cuenta con información según alcaldía de distrito acerca de la operatividad de la municipalidad. De aquí se extrajo información sobre el serenazgo y su equipamiento.
+- **SIDPOL**: Este es el Sistema de Registro y Control de Denuncias Policiales. Cuenta con información sobre todos los delitos denunciados a nivel nacional. En el Observatorio Nacional de Seguridad Ciudadana se puede encontrar información georreferenciada de las denuncias realizadas. De aquí se extrajo la variable del número de denuncias de casos por extorsión.
+
+Para poder analizar dichas bases de datos se utilizará un método de regresiones poisson y binomial negativa debido a que la variable dependiente es de conteo
