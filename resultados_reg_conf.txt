@@ -1,0 +1,29 @@
+
+Confianza Institucional
+====================================================
+                             Dependent variable:    
+                         ---------------------------
+                             Número de Denuncias    
+----------------------------------------------------
+Confianza PNP                     0.801***          
+                                   (0.254)          
+                                                    
+Confianza Municipalidad           -1.798***         
+                                   (0.246)          
+                                                    
+Confianza Poder Judicial           -0.925           
+                                   (0.620)          
+                                                    
+Confianza Fiscalía                  0.856           
+                                   (0.600)          
+                                                    
+Constant                          4.168***          
+                                   (0.407)          
+                                                    
+----------------------------------------------------
+Observations                         860            
+Log Likelihood                   -2,663.793         
+theta                         0.640*** (0.029)      
+Akaike Inf. Crit.                 5,337.585         
+====================================================
+Note:                    *p<0.1; **p<0.05; ***p<0.01

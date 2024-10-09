@@ -1,0 +1,131 @@
+---
+title: "Regresiones"
+author: "Carlos Crespín"
+date: "2024-10-07"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(AER)
+library(ggplot2)
+library(magrittr)
+library(MASS)
+library(stargazer)
+library(kableExtra)
+library(rio)
+library(knitr)
+library(modelsummary)
+tesis=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/datafinal.csv")
+```
+
+# Capacidad estatal pnp
+
+```{r, echo=FALSE}
+reg_pol=glm(denuncias ~ num_comisarias + personal + n_patru + area_com + old_com + com_internet, data = tesis, family = poisson(link = "log"))
+```
+
+## Poisson
+```{r, echo=FALSE}
+stargazer(reg_pol, type = "text", title = "Capacidades estatales de la PNP", 
+          dep.var.labels = "Número de Denuncias", 
+          covariate.labels = c("Número de Comisarías", "Personal","Patrullaje por día","Area","Años de las comisarías","Internet"), 
+          out = "resultados_regresion_poisson.txt")
+```
+
+## Test de dispersion
+
+```{r, echo=FALSE}
+overdispersion <- AER::dispersiontest(reg_pol, alternative = 'greater')$p.value < 0.05
+underdispersion <- AER::dispersiontest(reg_pol, alternative = 'less')$p.value < 0.05
+
+# Crear tabla con los resultados
+testResult <- data.frame(
+  Tipo = c("Sobredispersión", "Subdispersión"),
+  Resultado = c(overdispersion, underdispersion)
+)
+
+# Imprimir tabla como texto simple, adecuado para Word
+print(testResult)
+```
+
+
+```{r, include=FALSE}
+reg_bnpol=glm.nb(denuncias~num_comisarias + personal + n_patru + area_com + old_com + com_internet, data = tesis)
+summary(reg_bnpol)
+```
+
+## Binomial negativa
+
+```{r}
+stargazer(reg_bnpol, type = "text", title = "Capacidades estatales de la PNP", 
+          dep.var.labels = "Número de Denuncias", 
+          covariate.labels = c("Número de Comisarías", "Personal","Patrullaje por día","Area","Años de las comisarías","Internet"), 
+          out = "resultados_regresion_bn.txt")
+```
+
+## Quasipoisson
+
+```{r}
+rq_pol=glm(denuncias~num_comisarias + personal + n_patru + area_com + old_com + com_internet, data = tesis, family = quasipoisson(link = "log"))
+summary(rq_pol)
+```
+
+```{r}
+stargazer(rq_pol, type = "text", title = "Capacidades estatales de la PNP", 
+          dep.var.labels = "Número de Denuncias", 
+          covariate.labels = c("Número de Comisarías", "Personal","Patrullaje por día","Area","Años de las comisarías","Internet"), 
+          out = "resultados_regresion_qp.txt")
+```
+
+# Articulacion interinstitucional
+
+## Binomial negativa
+```{r}
+r_p_inter=glm.nb(denuncias~n_pat_int + nreu_codisec + juntas + redes + per_juntas + per_redes, data = tesis)
+summary(r_p_inter)
+```
+
+```{r}
+stargazer(r_p_inter, type = "text", title = "Articulacion interinstitucional", 
+          dep.var.labels = "Número de Denuncias", 
+          covariate.labels = c("Patrullaje integrado", "Número de reuniones del Codisec","Numero de juntas vecinales", "Número de redes de cooperantes","Número de personas en juntas vecinales","Número de personas en redes"), 
+          out = "resultados_regresion_art_bn.txt")
+```
+```{r}
+names(tesis)
+```
+
+```{r}
+r_conf=glm.nb(denuncias~conf_pnp + conf_muni + conf_pj + conf_mpfn, data = tesis)
+summary(r_conf)
+```
+
+```{r}
+stargazer(r_conf, type = "text", title = "Confianza Institucional", 
+          dep.var.labels = "Número de Denuncias", 
+          covariate.labels = c("Confianza PNP", "Confianza Municipalidad","Confianza Poder Judicial", "Confianza Fiscalía"), 
+          out = "resultados_reg_conf.txt")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
