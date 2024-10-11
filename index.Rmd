@@ -1,0 +1,330 @@
+---
+title: "Control territorial: ¿Competencia o cooperación? Factores que influyeron en el aumento de la extorsión en el Perú entre 2019 y 2022"
+bibliography: Tesis.bib
+author: Carlos Crespin
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard) # always
+```
+
+
+## Intro {.sidebar}
+
+Entre las principales fuentes de investigación de este trabajo se encuentran: 
+
+- @feldmann_gobernanza_2022
+- @noauthor_r_nodate
+- @lievano_asociacion_2022
+- @rojas_inseguridad_2016
+- @costa_reforma_2007
+- @yupari-azabache_factores_2020
+- @magallanes_data_2022
+- @dulin_community_2023
+- @mininter_denuncias_2024
+- @felipe_extorsion_2024
+
+### Presentación
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/caratula.png") 
+```
+
+### Introducción
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/introduccion.png")
+```
+
+*** 
+  
+En este apartado se utilizó las siguientes fuentes:
+
+- @datacrim_panel_2023
+- @iep_iep-op-junio-2023-informe-completopdf_2023
+- @mininter_denuncias_2024
+
+### Comparación del promedio de denuncias según tipo de delitos elaborado con la data abierta del Observatorio Nacional de Seguridad Ciudadana
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/graficos/graf1.rds")
+```
+
+***
+
+Se puede apreciar una diferencia sumamente significativa en la media de delitos patrimoniales respecto de los otros tipos de delitos
+
+### Tema y pregunta de investigación
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/graficos/graf4.rds")
+```
+
+***
+
+Tema: El aumento de los casos de extorsión en el Perú
+
+Pregunta: ¿Qué factores estatales influyeron en el aumento de las denuncias por extorsión en el Perú entre 2018 al 2023?
+
+Hubo un aumento tres veces mayor en las denuncias por casos de extorsión a nivel nacional
+
+### Revisión de Literatura
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/literature_review.png") 
+```
+
+***
+
+- @feldmann_gobernanza_2022
+- @gonzales_silva_optimizacion_2017
+- @rotta_origenes_2017
+- @ferreira_prediciendo_2022
+- @lievano_asociacion_2022
+- @rojas_inseguridad_2016
+- @campoy-torrente_evaluacion_2016
+- @zarate_inseguridad_2013
+- @dargent_estado_2012
+- @costa_reforma_2007
+- @costa_respuestas_2010
+- @dammert_violencia_2000
+- @coimbra_crimen_2019
+- @gabaldon_territorialidad_nodate
+- @yupari-azabache_factores_2020
+- @snyder_drugs_2009
+- @juan_pablo_luna_perspectivas_2015
+- @dammert_crimen_nodate
+- @dammert_corruption_2019
+- @andrade_pandillas_2015
+- @ginocchio_legalized_2022
+- @dulin_community_2023
+- @dammert_corrupcion_2017
+- @moncada_resisting_2022
+- @trejo_why_2018
+- @feldmann_criminal_2023
+- @tilly_guerra_2007
+- @mann_sources_1993
+- @mazzuca_middle-quality_2020
+- @odonnell_acerca_1993
+- @lessing_conceptualizing_2021
+- @arias_crime_2017
+- @camacho_arango_relaciones_2016
+- @fruhling_violencia_2009
+- @basombrio_delito_2007
+
+### Gobernanza criminal y la crisis de los Estados Latinoamericanos Contemporáneos
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/gobernanza_criminal_Feldmann.png") 
+```
+
+***
+
+- @snyder_drugs_2009
+- @lessing_conceptualizing_2021
+- @feldmann_gobernanza_2022
+- @trejo_votos_2022
+- @odonnell_acerca_1993
+- @tilly_guerra_2007
+- @mann_sources_1993
+- @mazzuca_middle-quality_2020
+- @arias_crime_2017
+- @moncada_resisting_2019
+- @trejo_why_2018
+
+### Marco Teórico: Gobernanza Criminal
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/Marco_teorico_Gobernanza_criminal.png") 
+```
+
+***
+
+Gráfico de elaboración propia sobre la base de la siguiente literatura:
+- @feldmann_gobernanza_2022
+- @moncada_resisting_2022
+- @moncada_cities_2016
+- @moncada_urban_2016
+- @moncada_resisting_2019
+- @feldmann_criminal_2023
+- @barnes_criminal_2017
+- @trejo_why_2018
+- @trejo_votos_2022
+- @kleemans_theoretical_2014
+- @ginocchio_legalized_2022
+- @dulin_community_2023
+- @dammert_corrupcion_2017
+- @estevez-soto_are_2021
+- @urrutia_tensiones_2021
+- @dammert_corruption_2019-1
+- @lessing_conceptualizing_2021
+- @duran-martinez_politics_2020
+- @dammert_prevencion_2005
+- @snyder_drugs_2009
+
+### Hipótesis
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/hipótesis.png")
+```
+
+***
+
+A grandes rasgos, sobre la base de la literatura existente, esas serían las 4 
+principales hipótesis a corroborar en el presente trabajo de investigación. No 
+obstante, debido a la naturaleza tanto cuantitativa como cualitativa, la presen-
+te investigación cuenta con hipótesis que combinan las variables antes menciona-
+das. Asimismo, dentro de esas hipótesis principales, se maneja subhipótesis, 
+especialmente en el caso de la capacidad estatal puesto que abarca distintas 
+dimensiones.
+Las fuentes principales para la elaboración de las hipótesis fueron las siguientes:
+
+- @moncada_resisting_2019
+- @moncada_resisting_2022
+- @basombrio_delito_2007
+- @dammert_corruption_2019
+- @dammert_prevencion_2005
+- @costa_reforma_2007
+- @urrutia_tensiones_2021
+- @fruhling_violencia_2009
+- @trejo_votos_2022
+- @trejo_why_2018
+- @juan_pablo_luna_perspectivas_2015
+- @snyder_drugs_2009
+- @feldmann_gobernanza_2022
+
+### Variable 1: Capacidad estatal
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/Capacidad_estatal.png")
+```
+
+### Variable 2: Articulación interinstitucional
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/Articulacion_interinstitucional.png")
+```
+
+### Variable 3: Alternancia subnacional
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/Alternancia_subnacional.png")
+```
+
+### Variable 4: Iniciativa comisarial
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/Iniciativa_comisarial.png")
+```
+
+### Metodología
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/metodo_mixto.png")
+```
+
+***
+
+Para el apartado metodológico se utilizó lo planteado por los siguientes autores:
+- @trejo_votos_2022
+- @munoz_politica_2008
+- @pattnaik_spatial_2020
+- @urrutia_tensiones_2021
+- @hsiao_why_2005
+- @hilbe_statistical_2017
+- @lievano_asociacion_2022
+- @gonzales_silva_optimizacion_2017
+
+### Hallazgos preliminares 1: Coropleta simple de extorsiones en el Perú
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/mapas/map1.rds")
+```
+
+***
+
+En esta coropleta simple se clasificó a las provincias en cinco categorías según
+el criterio JenkerCall. No obstante, esta clasificación resulta insuficiente de-
+bido a que Lima se presenta como un outlier considerable que altera la muestra y
+la clasificación.
+Asimismo, se puede identificar que las zonas más afectadas son, en su mayoría, 
+muy urbanizadas. 
+Este gráfico es de elaboración propia con los datos de @mininter_denuncias_2024 
+y utilizando el método propuesto por @magallanes_data_2022.
+
+### Hallazgos preliminares 2: Autocorrelación espacial univariada
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/mapas/map_MORAN.rds")
+```
+
+***
+
+En el primer gráfico, se puede observar que los hotoutliers son diez provincias del Perú: Jaén, en Cajamarca; Rioja, en San Martín; Leoncio Prado, en Huánuco; Padre Abad, en Ucayali; Contumaza, en Cajamarca; Trujillo, en La Libertad; Hualgayoc, en Cajamarca; Angares, en Huancavelica y Azángaro, en Puno.
+
+### Hallazgos preliminares 3: Autocorrelación espacial bivariada
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/mapas/mapa_BV.rds")
+```
+
+***
+
+En ese sentido, las provincias que presentan estas características son: Manu, en Madre de Dios; Paucartambo, en Cusco; Azángaro, en Puno; Tacna, en el departamento homónimo; Abancay, en Apurímac; Angares, en Huancavelica; Aija, Recuay y Bolognesi, en Áncash; Cajamarca, Hualgayoc y Contumaza, en Cajamarca; Trujillo, en La Libertad y, por último, San Martín y Rioja, en el departamento de San Martín.
+
+Provincias en común: Azángaro, en Puno; Angares, en Huancavelica; Contumaza, en Cajamarca; Trujillo, en La Libertad; Hualgayoc, en Cajamarca; Rioja, en San Martín
+
+### Hallazgos preliminares 4: Tabla de distritos con mayor número de denuncias por extorsión
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/Tabla de casos con más denuncias.png")
+```
+
+***
+
+Son los 30 distritos con más casos de extorsión por año a nivel nacional. Este 
+gráfico se elaboró con la base de datos de @mininter_denuncias_2024 georreferenciada.
+
+### Hallazgos preliminares 5: Mapa detallado de denuncias por extorsión a nivel nacional 
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/mapas/map10.rds")
+```
+
+***
+
+Este mapa contiene los distritos con mayor número de denuncias por casos de extorsión.
+En este se puede detectar por zonas específicas los casos de extorsión en los distintos
+distritos del pais.
+
+### Hallazgos preliminares 6: Alternancia subnacional a nivel distrital en el Perú en el año 2018
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/graficos/bar_sub1.rds")
+```
+
+***
+
+Cabe resaltar que a partir de ese año la reelección de autoridades se decretó como
+prohibida a nivel nacional. No obstante, los movimientos regionales o partidos de 
+esos años, al menos un 10%, se reeligió a nivel nacional. Este gráfico y el siguiente
+fueron elaborados por cuenta propia con la información proporcionada por el JNE
+a través del portal INFOGOB
+
+### Hallazgos preliminares 7: Alternancia subnacional a nivel distrital en el Perú en el año 2022
+
+```{r}
+readRDS("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/graficos/bar_sub2.rds")
+```
+
+### Pendientes
+
+```{r}
+knitr::include_graphics("C:/Users/Carlos Daniel/Documents/Tesis_de_Licenciatura/Delincuencia_en_el_Peru/imagenes/pendientes.png") 
+```
+
+### References
