@@ -208,7 +208,7 @@ Las fuentes principales para la elaboración de las hipótesis fueron las siguie
 knitr::include_graphics("~/Tesis_de_Licenciatura/Extortion_Peru/imagenes_presentacion/capacidad_estatal.png")
 ```
 
-### Variable 2: Articulación interinstitucional e iniciativa comisarial
+### Variable 2 y 3: Articulación interinstitucional e iniciativa comisarial
 
 ```{r}
 knitr::include_graphics("~/Tesis_de_Licenciatura/Extortion_Peru/imagenes_presentacion/art_inic.png")
@@ -220,10 +220,84 @@ knitr::include_graphics("~/Tesis_de_Licenciatura/Extortion_Peru/imagenes_present
 knitr::include_graphics("~/Tesis_de_Licenciatura/Extortion_Peru/imagenes_presentacion/MORAN_univariate.png")
 ```
 
+***
+
+En el primer gráfico, se puede observar que los hotoutliers son diez provincias del Perú: Jaén, en Cajamarca; Rioja, en San Martín; Leoncio Prado, en Huánuco; Padre Abad, en Ucayali; Contumaza, en Cajamarca; Trujillo, en La Libertad; Hualgayoc, en Cajamarca; Angares, en Huancavelica y Azángaro, en Puno.
+
+I de Moran de aprox 0.25
+
 ### Georreferencia LISA
 
 ```{r}
 knitr::include_graphics("~/Tesis_de_Licenciatura/Extortion_Peru/imagenes_presentacion/LISA_Bivariate.png")
+```
+
+*** 
+
+En ese sentido, las provincias que presentan estas características son: Manu, en Madre de Dios; Paucartambo, en Cusco; Azángaro, en Puno; Tacna, en el departamento homónimo; Abancay, en Apurímac; Angares, en Huancavelica; Aija, Recuay y Bolognesi, en Áncash; Cajamarca, Hualgayoc y Contumaza, en Cajamarca; Trujillo, en La Libertad y, por último, San Martín y Rioja, en el departamento de San Martín.
+
+Provincias en común: Azángaro, en Puno; Angares, en Huancavelica; Contumaza, en Cajamarca; Trujillo, en La Libertad; Hualgayoc, en Cajamarca; Rioja, en San Martín
+
+I de Moran de aproximadamente 0.25
+
+### Resultados de Capacidad de la PNP
+
+```{r}
+library(MASS)
+library(modelsummary)
+library(kableExtra)
+datafinal=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/datafinal.csv")
+rgbn_pol=glm.nb(denuncias~num_comisarias+personal+area_com+n_patru+offset(log(Poblacion)), data = datafinal)
+model_title=list('Binomial denuncias'=rgbn_pol)
+modelsummary(model_title, title = "Capacidad estatal de la PNP",
+             stars = TRUE,
+             output = "kableExtra") %>%
+  kable_styling(full_width = TRUE, font_size = 20)  # Ajuste de tamaño y ancho
+```
+
+### Resultados de la capacidad estatal de las municipalidades
+
+```{r}
+rgbn_muni=glm.nb(denuncias~serenazgos+n_vehi++offset(log(Poblacion)), data = datafinal)
+title_muni=list('Binomial denuncias municipalidades'=rgbn_muni)
+modelsummary(title_muni, title = "Capacidad estatal de las municipalidades",
+             stars = TRUE,
+             output = "kableExtra")%>%
+  kable_styling(full_width = TRUE, font_size = 25)  # Ajuste de tamaño y ancho
+```
+
+### Efecto de la Articulación Interinstitucional y la Prevención Comunitaria
+
+```{r}
+rgbn_arti_preven=glm.nb(denuncias~n_pat_int+nreu_codisec+juntas+redes+per_redes+per_juntas+offset(log(Poblacion)), data = datafinal)
+title_arti_preven=list('Binomial denuncias'=rgbn_arti_preven)
+modelsummary(title_arti_preven, title = "Articulación interinstitucional y prevención",
+             stars = TRUE,
+             output = "kableExtra")%>%
+  kable_styling(full_width = TRUE, font_size = 20) 
+```
+
+### Efecto de la confianza en las instituciones
+
+```{r}
+rgbn_conf=glm.nb(denuncias~conf_pnp+conf_muni+conf_pj+conf_mpfn+offset(log(Poblacion)), data = datafinal)
+title_conf=list('Binomial denuncias'=rgbn_conf)
+modelsummary(title_conf, title = "Confianza institucional",
+             stars = TRUE,
+             output = "kableExtra")%>%
+  kable_styling(full_width = TRUE, font_size = 22) 
+```
+
+### Actores
+
+```{r}
+knitr::include_graphics("~/Tesis_de_Licenciatura/Extortion_Peru/imagenes_presentacion/actores.png") 
+```
+
+### Pendientes
+
+```{r}
+knitr::include_graphics("~/Tesis_de_Licenciatura/Extortion_Peru/imagenes_presentacion/pendientes.png") 
 ```
 
 ### References
