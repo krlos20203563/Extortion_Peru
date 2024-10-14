@@ -14,6 +14,7 @@ library(rio)
 library(dplyr)
 library(magrittr)
 library(tidyr)
+library(stringi)
 ```
 
 # SIUP
@@ -261,6 +262,7 @@ SIUP2021 <- SIUP2021 %>%
   )
 ```
 
+
 # SIDPOL
 
 ```{r}
@@ -274,6 +276,7 @@ prueba2=prueba2%>%
   group_by(ANIO, UBICACION)%>%
   summarise(denuncias=sum(CANTIDAD))
 ```
+
 ```{r}
 extor2019=filter(prueba2, ANIO=="2019")
 extor2020=filter(prueba2, ANIO=="2020")
@@ -293,7 +296,7 @@ renamu2021=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/head
 #añadiré la variable UBICACION
 #primero con 2019
 renamu2019 <- renamu2019 %>%
-  mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
+  mutate(UBICACION = paste(ANCO_HUALLO, Provincia, Distrito, sep = "+"))
 #ahora con 2020
 renamu2020 <- renamu2020 %>%
   mutate(UBICACION = paste(Departamento, Provincia, Distrito, sep = "+"))
@@ -414,15 +417,51 @@ confianza2021 <- confianza2021 %>%
   )
 ```
 
-# Unir todo 2019
+# PROOYECCION POBLACIONAL
 
 ```{r}
-SIUP2020[SIUP2020$UBICACION=='CUSCO+LA CONVENCIÓN+KIMBIRI','UBICACION']='CUSCO+LA CONVENCION+KIMBIRI'
-extor2020[extor2020$UBICACION=='PIURA+PIURA+26 DE OCTUBRE','UBICACION']='PIURA+PIURA+VEINTISEIS DE OCTUBRE'
-extor2020[extor2020$UBICACION=='LIMA+LIMA+LURIGANCHO - CHOSICA','UBICACION']='LIMA+LIMA+LURIGANCHO'
+pob_proy=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/PROYECCION_POB/proy_pob.xlsx")
 ```
 
+```{r}
+setdiff(pob_proy$DEPARTAMENTO,extorsion$DPTO_HECHO_NEW)
+```
+
+```{r}
+pob_proy <- pob_proy %>%
+  mutate(UBICACION = paste(DEPARTAMENTO, PROVINCIA, DISTRITO, sep = "+"))
+```
+
+```{r}
+pob2019=select(pob_proy, c(9,5))
+pob2020=select(pob_proy, c(9,6))
+pob2021=select(pob_proy, c(9,7))
+```
+
+```{r}
+names(pob2019)=c("UBICACION","Poblacion")
+names(pob2020)=c("UBICACION","Poblacion")
+names(pob2021)=c("UBICACION","Poblacion")
+```
+
+```{r}
+setdiff(extorsion$PROV_HECHO, pob_proy$PROVINCIA)
+```
+
+
+# Unir todo 2019
+
+
 ## Unir siup y renamu
+
+```{r}
+setdiff(SIUP2019$UBICACION, renamu2019$UBICACION)
+```
+
+```{r}
+renamu2019[renamu2019$UBICACION=='UCAYALI+ATALAYA+RAIMONDI','UBICACION']='UCAYALI+ATALAYA+RAYMONDI'
+```
+
 
 ```{r}
 # SIUP+renamu
@@ -431,34 +470,47 @@ renasiup2019=inner_join(SIUP2019, renamu2019)
 ## Unir con enapres
 
 ```{r}
-rena_sip_enap2019=full_join(renasiup2019, confianza2019, join_by("UBICACION"))
+rena_siup_enap2019=full_join(renasiup2019, confianza2019, join_by("UBICACION"))
 ```
 
 ```{r}
-summary(rena_sip_enap2019$conf_pnp)
-summary(rena_sip_enap2019$conf_muni)
-summary(rena_sip_enap2019$conf_pj)
-summary(rena_sip_enap2019$conf_mpfn)
+library(mice)
+rena_siup_enap2019<-mice(rena_siup_enap2019,m=5,method = 'pmm')
+rena_siup_enap2019=complete(rena_siup_enap2019)
+```
+
+## unir con proyeccion poblacional
+
+```{r}
+setdiff(rena_siup_enap2019$UBICACION, pob2019$UBICACION)
+```
+```{r}
+pob2019[pob2019$UBICACION=='ANCASH+CARLOS F. FITZCARRALD+YAUYA','UBICACION']='ANCASH+CARLOS FERMIN FITZCARRALD+SAN LUIS'
+pob2019[pob2019$UBICACION=='ANCASH+CARLOS F. FITZCARRALD+YAUYA','UBICACION']='ANCASH+CARLOS FERMIN FITZCARRALD+YAUYA'
+pob2019[pob2019$UBICACION=='TACNA+TACNA+CRNEL.GREGORIO ALBARRACIN LANCHIPA','UBICACION']='TACNA+TACNA+CORONEL GREGORIO ALBARRACIN LANCHIPA'
+pob2019[pob2019$UBICACION=='PASCO+PASCO+SAN FCO.DE ASIS DE YARUSYAC','UBICACION']='PASCO+PASCO+SAN FRANCISCO DE ASIS DE YARUSYACAN'
+rena_siup_enap2019[rena_siup_enap2019$UBICACION=='CAJAMARCA+CONTUMAZA+SANTA CRUZ DE TOLED','UBICACION']='CAJAMARCA+CONTUMAZA+SANTA CRUZ DE TOLEDO'
+rena_siup_enap2019[rena_siup_enap2019$UBICACION=='PASCO+OXAPAMPA+CONSTITUCIËN','UBICACION']='PASCO+OXAPAMPA+CONSTITUCION'
 ```
 
 ```{r}
-#pnp
-rena_sip_enap2019 <- rena_sip_enap2019 %>%
-  mutate(conf_pnp = replace_na(conf_pnp, 1.98))
-#muni
-rena_sip_enap2019 <- rena_sip_enap2019 %>%
-  mutate(conf_muni = replace_na(conf_muni, 1.88))
-#pj
-rena_sip_enap2019 <- rena_sip_enap2019 %>%
-  mutate(conf_pj = replace_na(conf_pj, 1.56))
-#mpfn
-rena_sip_enap2019 <- rena_sip_enap2019 %>%
-  mutate(conf_mpfn = replace_na(conf_mpfn, 1.55))
+pre_total2019=inner_join(rena_siup_enap2019, pob2019)
 ```
+
 
 ## Merge final 2019
+
 ```{r}
-data2019=full_join(rena_sip_enap2019, extor2019, join_by("UBICACION"))
+setdiff(extor2019$UBICACION, pre_total2019$UBICACION)
+```
+
+```{r}
+extor2019[extor2019$UBICACION=='UCAYALI+PADRE ABAD+A.VON.HUMBOLDT','UBICACION']='UCAYALI+PADRE ABAD+ALEXANDER VON HUMBOLDT'
+```
+
+```{r}
+data2019=full_join(pre_total2019, extor2019, join_by("UBICACION"))
+data2019=select(data2019, c(1:22))
 ```
 
 ```{r}
@@ -473,10 +525,12 @@ data2019 <- data2019 %>%
 # Unir todo 2020
 
 ```{r}
-extor2019[extor2019$UBICACION=='LIMA+LIMA+LURIGANCHO - CHOSICA','UBICACION']='LIMA+LIMA+LURIGANCHO'
-extor2019[extor2019$UBICACION=='PIURA+PIURA+26 DE OCTUBRE','UBICACION']='PIURA+PIURA+VEINTISEIS DE OCTUBRE'
-extor2019[extor2019$UBICACION=='UCAYALI+PADRE ABAD+A.VON.HUMBOLDT','UBICACION']='UCAYALI+PADRE ABAD+ALEXANDER VON HUMBOLDT'
+setdiff(SIUP2020$UBICACION, renamu2020$UBICACION)
 ```
+```{r}
+renamu2020[renamu2020$UBICACION=='UCAYALI+ATALAYA+RAIMONDI','UBICACION']='UCAYALI+ATALAYA+RAYMONDI'
+```
+
 
 ```{r}
 # SIUP+renamu
@@ -489,31 +543,38 @@ renasiup2020=inner_join(SIUP2020, renamu2020)
 rena_sip_enap2020=full_join(renasiup2020, confianza2020, join_by("UBICACION"))
 ```
 
+## unir con proyeccion poblacional
+
 ```{r}
-summary(rena_sip_enap2020$conf_pnp)
-summary(rena_sip_enap2020$conf_muni)
-summary(rena_sip_enap2020$conf_pj)
-summary(rena_sip_enap2020$conf_mpfn)
+setdiff(rena_sip_enap2020$UBICACION, pob2020$UBICACION)
+```
+```{r}
+pob2020[pob2020$UBICACION=='ANCASH+CARLOS F. FITZCARRALD+YAUYA','UBICACION']='ANCASH+CARLOS FERMIN FITZCARRALD+SAN LUIS'
+pob2020[pob2020$UBICACION=='ANCASH+CARLOS F. FITZCARRALD+YAUYA','UBICACION']='ANCASH+CARLOS FERMIN FITZCARRALD+YAUYA'
+pob2020[pob2020$UBICACION=='TACNA+TACNA+CRNEL.GREGORIO ALBARRACIN LANCHIPA','UBICACION']='TACNA+TACNA+CORONEL GREGORIO ALBARRACIN LANCHIPA'
+pob2020[pob2020$UBICACION=='PASCO+PASCO+SAN FCO.DE ASIS DE YARUSYAC','UBICACION']='PASCO+PASCO+SAN FRANCISCO DE ASIS DE YARUSYACAN'
+rena_sip_enap2020[rena_sip_enap2020$UBICACION=='CAJAMARCA+CONTUMAZA+SANTA CRUZ DE TOLED','UBICACION']='CAJAMARCA+CONTUMAZA+SANTA CRUZ DE TOLEDO'
+rena_sip_enap2020[rena_sip_enap2020$UBICACION=='PASCO+OXAPAMPA+CONSTITUCIËN','UBICACION']='PASCO+OXAPAMPA+CONSTITUCION'
+rena_sip_enap2020[rena_sip_enap2020$UBICACION=='APURIMAC+ANDAHUAYLAS+JOSÉ MARÍA ARGUEDAS','UBICACION']='APURIMAC+ANDAHUAYLAS+JOSE MARIA ARGUEDAS'
 ```
 
 ```{r}
-#pnp
-rena_sip_enap2020 <- rena_sip_enap2020 %>%
-  mutate(conf_pnp = replace_na(conf_pnp, 2.20))
-#muni
-rena_sip_enap2020 <- rena_sip_enap2020 %>%
-  mutate(conf_muni = replace_na(conf_muni, 2.10))
-#pj
-rena_sip_enap2020 <- rena_sip_enap2020 %>%
-  mutate(conf_pj = replace_na(conf_pj, 2.16))
-#mpfn
-rena_sip_enap2020 <- rena_sip_enap2020 %>%
-  mutate(conf_mpfn = replace_na(conf_mpfn, 2.21))
+pre_total2020=inner_join(rena_sip_enap2020, pob2020)
 ```
+```{r}
+pre_total2020<-mice(pre_total2020,m=5,method = 'pmm')
+pre_total2020=complete(pre_total2020)
+```
+
 
 ## Merge final 2020
+
 ```{r}
-data2020=full_join(rena_sip_enap2020, extor2020, join_by("UBICACION"))
+setdiff(extor2020$UBICACION, pre_total2020$UBICACION)
+```
+
+```{r}
+data2020=full_join(pre_total2020, extor2020, join_by("UBICACION"))
 ```
 
 ```{r}
@@ -528,10 +589,13 @@ summary(data2019$denuncias)
 # Unir todo 2021
 
 ```{r}
-extor2021[extor2021$UBICACION=='PIURA+PIURA+26 DE OCTUBRE','UBICACION']='PIURA+PIURA+VEINTISEIS DE OCTUBRE'
-extor2021[extor2021$UBICACION=='LIMA+LIMA+LURIGANCHO - CHOSICA','UBICACION']='LIMA+LIMA+LURIGANCHO'
-extor2021[extor2021$UBICACION=='UCAYALI+PADRE ABAD+A.VON.HUMBOLDT','UBICACION']='UCAYALI+PADRE ABAD+ALEXANDER VON HUMBOLDT'
+setdiff(SIUP2021$UBICACION, renamu2021$UBICACION)
 ```
+
+```{r}
+renamu2021[renamu2021$UBICACION=='UCAYALI+ATALAYA+RAIMONDI','UBICACION']='UCAYALI+ATALAYA+RAYMONDI'
+```
+
 
 ```{r}
 # SIUP+renamu
@@ -544,31 +608,44 @@ renasiup2021=inner_join(SIUP2021, renamu2021)
 rena_sip_enap2021=full_join(renasiup2021, confianza2021, join_by("UBICACION"))
 ```
 
+## unir con proyeccion poblacional
+
 ```{r}
-summary(rena_sip_enap2021$conf_pnp)
-summary(rena_sip_enap2021$conf_muni)
-summary(rena_sip_enap2021$conf_pj)
-summary(rena_sip_enap2021$conf_mpfn)
+setdiff(rena_sip_enap2021$UBICACION, pob2021$UBICACION)
 ```
 
 ```{r}
-#pnp
-rena_sip_enap2021 <- rena_sip_enap2021 %>%
-  mutate(conf_pnp = replace_na(conf_pnp, 2.19))
-#muni
-rena_sip_enap2021 <- rena_sip_enap2021 %>%
-  mutate(conf_muni = replace_na(conf_muni, 2.12))
-#pj
-rena_sip_enap2021 <- rena_sip_enap2021 %>%
-  mutate(conf_pj = replace_na(conf_pj, 2.16))
-#mpfn
-rena_sip_enap2021 <- rena_sip_enap2021 %>%
-  mutate(conf_mpfn = replace_na(conf_mpfn, 2.21))
+pob2021[pob2021$UBICACION=='ANCASH+CARLOS F. FITZCARRALD+YAUYA','UBICACION']='ANCASH+CARLOS FERMIN FITZCARRALD+SAN LUIS'
+pob2021[pob2021$UBICACION=='ANCASH+CARLOS F. FITZCARRALD+YAUYA','UBICACION']='ANCASH+CARLOS FERMIN FITZCARRALD+YAUYA'
+pob2021[pob2021$UBICACION=='TACNA+TACNA+CRNEL.GREGORIO ALBARRACIN LANCHIPA','UBICACION']='TACNA+TACNA+CORONEL GREGORIO ALBARRACIN LANCHIPA'
+pob2021[pob2021$UBICACION=='PASCO+PASCO+SAN FCO.DE ASIS DE YARUSYAC','UBICACION']='PASCO+PASCO+SAN FRANCISCO DE ASIS DE YARUSYACAN'
+rena_sip_enap2021[rena_sip_enap2021$UBICACION=='CAJAMARCA+CONTUMAZA+SANTA CRUZ DE TOLED','UBICACION']='CAJAMARCA+CONTUMAZA+SANTA CRUZ DE TOLEDO'
+rena_sip_enap2021[rena_sip_enap2021$UBICACION=='PASCO+OXAPAMPA+CONSTITUCIËN','UBICACION']='PASCO+OXAPAMPA+CONSTITUCION'
+rena_sip_enap2021[rena_sip_enap2021$UBICACION=='APURIMAC+ANDAHUAYLAS+JOSÉ MARÍA ARGUEDAS','UBICACION']='APURIMAC+ANDAHUAYLAS+JOSE MARIA ARGUEDAS'
 ```
 
-## Merge final 2019
 ```{r}
-data2021=full_join(rena_sip_enap2021, extor2021, join_by("UBICACION"))
+pre_total2021=inner_join(rena_sip_enap2021, pob2021)
+```
+
+```{r}
+pre_total2021<-mice(pre_total2021,m=5,method = 'pmm')
+pre_total2021=complete(pre_total2021)
+```
+
+
+## Merge final 2021
+
+```{r}
+setdiff(extor2021$UBICACION, pre_total2021$UBICACION)
+```
+
+```{r}
+extor2021[extor2021$UBICACION=='UCAYALI+PADRE ABAD+A.VON.HUMBOLDT','UBICACION']='UCAYALI+PADRE ABAD+ALEXANDER VON HUMBOLDT'
+```
+
+```{r}
+data2021=full_join(pre_total2021, extor2021, join_by("UBICACION"))
 ```
 
 ```{r}
@@ -576,20 +653,17 @@ data2021 <- data2021 %>%
   mutate(ANIO = replace_na(ANIO, 2021))
 ```
 
-```{r}
-data2021=data2021 %>%
-  rename(serenazgos = P69_2_T)
-```
-
-```{r}
-summary(data2019$denuncias)
-```
 
 # Data Final
 
 ```{r}
 data_pre <- rbind(data2019, data2020)
 ```
+
+```{r}
+names(data2021)[14] <- "serenazgos"
+```
+
 
 ```{r}
 datafinal <- rbind(data_pre, data2021)
