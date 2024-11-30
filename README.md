@@ -1,7 +1,6 @@
 # Extortion_Peru
 Este repositorio cuenta con información sobre las bases de datos de mi tesis de licenciatura, así como la elaboración del apartado cuantitativo de la misma.
 El tema de investigación a analizar es acerca de qué factores permitieron el aumento del número de delitos por extorsión a nivel nacional. Para esto, se toma en cuenta múltiples variables que se encuentran en el archivo **datafinal.csv**
-La presentación de dicho proyecto se encuentra en este enlace: https://krlos20203563.github.io/Extortion_Peru/
 # Variables
 Las variables en cuestión son:
 ## Variables independientes

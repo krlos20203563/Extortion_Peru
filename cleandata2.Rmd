@@ -1,0 +1,1196 @@
+---
+title: "cleandata2"
+author: "Carlos Crespín"
+date: "2024-11-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Librerias principales
+
+```{r}
+library(readxl)
+library(rio)
+library(dplyr)
+library(magrittr)
+library(kableExtra)
+library(tidyr)
+library(mice)
+```
+
+# SIUP
+
+## 2019
+
+### Cuestionario 100
+
+```{r}
+#importamos la data
+siup2019_c100=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2019/SIUP2019_c100_LISTO.xlsx")
+```
+
+```{r}
+#de esta base lo unico a seleccionar es el numero del personal
+siup2019_c100=select(siup2019_c100, c(1:4, 86))
+```
+
+```{r}
+names(siup2019_c100)=c("ID_N","NOMBREDD","NOMBREPP","NOMBREDI","personal")
+```
+
+### Cuestionario 200
+
+```{r}
+#importamos la data
+siup2019_c200=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2019/SIUP2019_c200_LISTO.xlsx")
+```
+
+```{r}
+# Reemplazar NAs por 0 en las cuatro columnas
+siup2019_c200=siup2019_c200 %>%
+  mutate(
+    internet = replace_na(internet, 0),
+    electricidad = replace_na(electri, 0),
+    agua = replace_na(agua, 0),
+    desague = replace_na(desague, 0)
+  )
+```
+
+```{r}
+library(dplyr)
+#Creo un índice aditivo y después le pido a R que me cree una variable llamada comisaria optima
+siup2019_c200 <- siup2019_c200 %>%
+  mutate(
+    # Crear el índice aditivo sumando las variables
+    indice_servicios = internet + electricidad + agua + desague,
+    
+    # Crear una nueva variable que sea 1 si todos los servicios están presentes, 0 en caso contrario
+    todos_servicios = if_else(indice_servicios == 4, 1, 0)
+  )
+
+```
+
+```{r}
+#seleccion de variables necesarias
+siup2019_c200=select(siup2019_c200, c(1:4, 7:10,12))
+```
+
+### Cuestionario 600
+
+```{r}
+#importacion de la data
+siup2019_c600=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2019/SIUP2019_c600_LISTO.xlsx")
+```
+
+```{r}
+#creacion de variables patrullaje y patrullaje integrado
+siup2019_c600=siup2019_c600%>%
+  mutate(patrullaje=pat_m_pie+pat_m_car+pat_m_bike+pat_t_pie+pat_t_car+pat_t_bike+pat_n_pie+pat_n_car+pat_n_bike)
+siup2019_c600=siup2019_c600%>%
+  mutate(pat_int=patin_m_car+patin_m_suv+patin_t_car+patin_t_suv+patin_n_car+patin_n_suv)
+```
+
+```{r}
+#seleccion de variables importantes
+siup2019_c600=select(siup2019_c600, c(1, 17:22))
+```
+
+### Merge
+
+```{r}
+#primer merge
+siup2019_1=inner_join(siup2019_c100, siup2019_c200, by="ID_N")
+```
+
+```{r}
+#segundo merge
+SIUP2019=inner_join(siup2019_1, siup2019_c600, by="ID_N")
+```
+
+```{r}
+#limpieza
+SIUP2019=select(SIUP2019, c(1:5,9:19))
+
+SIUP2019=SIUP2019%>%
+  mutate(patrullaje=patrullaje/30)
+SIUP2019=SIUP2019%>%
+  mutate(pat_int=pat_int/30)
+```
+
+```{r}
+#redondear
+SIUP2019 <- SIUP2019 %>%
+  mutate(
+    patrullaje = round(patrullaje),
+    pat_int = round(pat_int)
+  )
+```
+
+```{r}
+export(SIUP2019, "SIUP2019.xlsx")
+```
+
+### Ajustes finales
+```{r}
+SIUP2019 <- SIUP2019 %>%
+  group_by(NOMBREDD.x, NOMBREPP.x) %>%
+  summarise(
+    num_comisarias = n(),                  
+    personal = sum(personal, na.rm = TRUE),
+    agua=sum(agua, na.rm = TRUE),
+    desague=sum(desague, na.rm = TRUE),
+    electricidad=sum(electricidad, na.rm = TRUE),
+    internet=sum(internet, na.rm = TRUE),
+    todos_servicios=sum(todos_servicios, na.rm = TRUE),
+    juntas=sum(n_juntas, na.rm = TRUE),
+    per_juntas=sum(np_juntas, na.rm = TRUE),
+    redes=sum(n_red, na.rm=TRUE),
+    per_redes=sum(np_red, na.rm = TRUE),
+    n_patru=sum(patrullaje, na.rm = TRUE),
+    n_pat_int=sum(pat_int, na.rm = TRUE)
+  )
+```
+```{r}
+SIUP2019$ANIO=2019
+names(SIUP2019)=c("Departamento","Provincia","num_comisarias","personal","agua","desague","electricidad","internet","todos_servicios","juntas","per_juntas","redes","per_redes","n_patru","n_pat_int","ANIO")
+```
+
+## 2020
+
+### Cuestionario 100
+
+```{r}
+#importamos la data
+siup2020_iden=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2020/SIUP2020_iden.xlsx")
+siup2020_c100=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2020/SIUP2020_c100_LISTO.xlsx")
+```
+
+```{r}
+#canbios en los nombres de las variables del cuestionario 100
+names(siup2020_c100)=c("COD_CPNP","nombre_unidadp","personal")
+#cambio de nombres en las variables del identificador
+names(siup2020_iden)=c("COD_CPNP","Departamento","Provincia","Distrito")
+```
+
+
+### Cuestionario 200
+
+```{r}
+siup2020_c200=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2020/SIUP2020_c200_LISTO.xlsx")
+```
+
+```{r}
+siup2020_c200 <- siup2020_c200 %>%
+  mutate(
+    # Crear el índice aditivo sumando las variables
+    indice_servicios = internet + electricidad + agua + desague,
+    
+    # Crear una nueva variable que sea 1 si todos los servicios están presentes, 0 en caso contrario
+    todos_servicios = if_else(indice_servicios == 4, 1, 0)
+  )
+```
+
+### Cuestionario 600
+
+```{r}
+#importamos la data, otra vez
+siup2020_c600=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2020/SIUP2020_c600_LISTO.xlsx")
+```
+
+```{r}
+#patrullaje normal
+siup2020_c600=siup2020_c600%>%
+  mutate(patrullaje=pat_m_pie+pat_m_car+pat_m_suv+pat_m_bike+pat_t_pie+pat_t_car+pat_t_suv+pat_t_bike+pat_n_pie+pat_n_car+pat_n_suv+pat_n_bike)
+
+#patrullaje integrado
+siup2020_c600=siup2020_c600%>%
+  mutate(pat_int=patin_m_car+patin_m_suv+patin_t_car+patin_t_suv+patin_n_car+patin_n_suv)
+```
+
+```{r}
+siup2020_c600=select(siup2020_c600, c(1,2,21:26))
+```
+
+### Merge
+
+```{r}
+#identificador con provincias
+siup2020_1=merge(siup2020_iden, siup2020_c100)
+```
+
+```{r}
+#merge 2 de c100 con c200
+siup2020_2=merge(siup2020_1, siup2020_c200)
+```
+
+```{r}
+SIUP2020=merge(siup2020_2, siup2020_c600)
+```
+
+### Ajustes finales
+
+```{r}
+#seleccionar las variables a utilizar
+SIUP2020=select(SIUP2020, c(3,4,6,9:12,14:20))
+```
+
+```{r}
+SIUP2020 <- SIUP2020 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    num_comisarias = n(),                  
+    personal = sum(personal, na.rm = TRUE),
+    agua=sum(agua, na.rm = TRUE),
+    desague=sum(desague, na.rm = TRUE),
+    electricidad=sum(electricidad, na.rm = TRUE),
+    internet=sum(internet, na.rm = TRUE),
+    todos_servicios=sum(todos_servicios, na.rm = TRUE),
+    juntas=sum(n_juntas, na.rm = TRUE),
+    per_juntas=sum(np_juntas, na.rm = TRUE),
+    redes=sum(n_redes, na.rm=TRUE),
+    per_redes=sum(np_redes, na.rm = TRUE),
+    n_patru=sum(patrullaje, na.rm = TRUE),
+    n_pat_int=sum(pat_int, na.rm = TRUE)
+  )
+```
+```{r}
+#añadir el año
+SIUP2020$ANIO=2020
+```
+
+## 2021
+
+### Cuestionario 100
+
+```{r}
+#importar la dta
+siup2021_nombres=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2021/m_unidad_policial.xlsx")
+siup2021_c100=import("https://github.com/krlos20203563/Extortion_Peru/raw/refs/heads/main/data/SIUP/SIUP2021/SIUP2021_c100_LISTO.xlsx")
+#cambiar los nombres del primer cuestionario
+names(siup2021_c100)=c("id_unidad_policial","personal")
+```
+
+### Cuestionario 200
+
+```{r}
+siup2021_c200=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2021/SIUP2021_c200_LISTO.xlsx")
+```
+
+```{r}
+#Reemplazar NAs
+siup2021_c200=siup2021_c200 %>%
+  mutate(
+    internet = replace_na(internet, 0),
+    electricidad = replace_na(electricidad, 0),
+    agua = replace_na(agua, 0),
+    desague = replace_na(desague, 0)
+  )
+```
+
+
+```{r}
+siup2021_c200 <- siup2021_c200 %>%
+  mutate(
+    # Crear el índice aditivo sumando las variables
+    indice_servicios = internet + electricidad + agua + desague,
+    
+    # Crear una nueva variable que sea 1 si todos los servicios están presentes, 0 en caso contrario
+    todos_servicios = if_else(indice_servicios == 4, 1, 0)
+  )
+```
+
+### Cuestionario 600
+
+```{r}
+siup2021_c600=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2021/SIUP2021_c600_LISTO.xlsx")
+```
+
+```{r}
+siup2021_c600 <- siup2021_c600 %>%
+  mutate(across(where(is.character), as.numeric))
+```
+
+
+```{r}
+siup2021_c600=siup2021_c600%>%
+  mutate(patrullaje=pat_m_pie+pat_m_car+pat_m_suv+pat_m_bike+pat_t_pie+pat_t_car+pat_t_suv+pat_t_bike+pat_n_pie+pat_n_car+pat_n_suv+pat_n_bike)
+siup2021_c600=siup2021_c600%>%
+  mutate(pat_int=patin_m_car+patin_m_suv+patin_t_car+patin_t_suv+patin_n_car+patin_n_suv)
+```
+
+```{r}
+#seleccionar columnas
+siup2021_c600=select(siup2021_c600, c(1,20:25))
+```
+
+### Merge
+
+```{r}
+siup2021_1=merge(siup2021_nombres, siup2021_c100)
+```
+
+```{r}
+siup2021_2=merge(siup2021_1, siup2021_c200)
+```
+
+```{r}
+SIUP2021=merge(siup2021_2,siup2021_c600)
+```
+
+### Ajustes finales
+
+```{r}
+#seleccionar las variables a utilizar
+SIUP2021=select(SIUP2021, c(2, 3, 6:10,12:18))
+```
+
+```{r}
+SIUP2021 <- SIUP2021 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    num_comisarias = n(),                  
+    personal = sum(personal, na.rm = TRUE),
+    agua=sum(agua, na.rm = TRUE),
+    desague=sum(desague, na.rm = TRUE),
+    electricidad=sum(electricidad, na.rm = TRUE),
+    internet=sum(internet, na.rm = TRUE),
+    todos_servicios=sum(todos_servicios, na.rm = TRUE),
+    juntas=sum(n_juntas, na.rm = TRUE),
+    per_juntas=sum(np_juntas, na.rm = TRUE),
+    redes=sum(n_redes, na.rm=TRUE),
+    per_redes=sum(np_redes, na.rm = TRUE),
+    n_patru=sum(patrullaje, na.rm = TRUE),
+    n_pat_int=sum(pat_int, na.rm = TRUE)
+  )
+```
+
+```{r}
+SIUP2021$ANIO=2021
+```
+
+
+## 2022
+
+### Cuestionario 100
+
+```{r}
+#importé el cuestionario 100, creo
+siup2022_c100=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/SIUP/SIUP2022/data_efectivos_policiales.xlsx")
+```
+
+### Cuestionario 200
+
+```{r}
+siup2022_c200 <- read_excel("data/SIUP/SIUP2022/SIUP2022_c200_LISTO.xlsx", 
+                            sheet = "BD")
+siup2022_c200$cod=1
+```
+
+```{r}
+siup2022_c200=siup2022_c200 %>%
+  mutate(
+    internet = replace_na(internet, 0)
+  )
+```
+
+
+```{r}
+siup2022_c200 <- siup2022_c200 %>%
+  mutate(
+    # Crear el índice aditivo sumando las variables
+    indice_servicios = internet + electricidad + agua + desague,
+    
+    # Crear una nueva variable que sea 1 si todos los servicios están presentes, 0 en caso contrario
+    todos_servicios = if_else(indice_servicios == 4, 1, 0)
+  )
+```
+
+```{r}
+siup2022_c200=select(siup2022_c200, c(4,5,7:11,13))
+```
+
+### Cambio de unidad a provincias
+
+#### Cambio en cuestionario 200
+```{r}
+siup2022_c200 <- siup2022_c200 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    num_comisarias = sum(cod, na.rm = TRUE),                  
+    agua=sum(agua, na.rm = TRUE),
+    desague=sum(desague, na.rm = TRUE),
+    electricidad=sum(electricidad, na.rm = TRUE),
+    internet=sum(internet, na.rm = TRUE),
+    todos_servicios=sum(todos_servicios, na.rm = TRUE)
+  )
+```
+
+#### Cambio en cuestionario 100
+
+```{r}
+siup2022_c100=siup2022_c100%>%
+  group_by(Departamento, Provincia)%>%
+  summarise(
+    personal=sum(CANTIDAD, na.rm = TRUE)
+  )
+```
+
+### Merge
+
+```{r}
+SIUP2022=left_join(siup2022_c100, siup2022_c200)
+```
+
+```{r}
+SIUP2022=select(SIUP2022, c(1,2,4,3,5:9))
+```
+
+```{r}
+#truco: añadir variables
+SIUP2022$juntas=NA
+SIUP2022$per_juntas=NA
+SIUP2022$redes=NA
+SIUP2022$per_redes=NA
+SIUP2022$n_patru=NA
+SIUP2022$n_pat_int=NA
+SIUP2022$ANIO=2022
+```
+
+# ENAPRES 
+
+## 2019
+
+### Importacion d ela data
+
+```{r}
+enapres2019=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/ENAPRES/enapres2019/enapres2019.xlsx")
+```
+
+### Pre procesamiento
+
+```{r}
+#cambio de nombres
+names(enapres2019)=c("Departamento","Provincia","Distrito","PNP","MUNI","PJ","MPFN")
+```
+
+### Cambio a provincias
+
+```{r}
+enapres2019 <- enapres2019 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    conf_pnp = mean(PNP, na.rm = TRUE),
+    conf_muni = mean(MUNI, na.rm = TRUE),
+    conf_pj = mean(PJ, na.rm = TRUE),
+    conf_mpfn = mean(MPFN, na.rm = TRUE)
+  )
+```
+### Redondeo
+
+```{r}
+#Empecemos con 2019
+enapres2019 <- enapres2019 %>%
+  mutate(
+    conf_pnp = round(conf_pnp, 2),              
+    conf_muni = round(conf_muni, 2),       
+    conf_pj = round(conf_pj, 2),
+    conf_mpfn=round(conf_mpfn, 2)
+  )
+```
+
+## 2020
+
+### Importacion de la data
+
+```{r}
+enapres2020=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/ENAPRES/enapres2020/enapres2020.csv")
+```
+
+```{r}
+#cambio de nombres
+names(enapres2020)=c("Departamento","Provincia","Distrito","PNP","MUNI","PJ","MPFN")
+```
+
+### Cambio a provincias
+
+```{r}
+enapres2020 <- enapres2020 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    conf_pnp = mean(PNP, na.rm = TRUE),
+    conf_muni = mean(MUNI, na.rm = TRUE),
+    conf_pj = mean(PJ, na.rm = TRUE),
+    conf_mpfn = mean(MPFN, na.rm = TRUE)
+  )
+```
+### Redondeo
+
+```{r}
+#Empecemos con 2019
+enapres2020 <- enapres2020 %>%
+  mutate(
+    conf_pnp = round(conf_pnp, 2),              
+    conf_muni = round(conf_muni, 2),       
+    conf_pj = round(conf_pj, 2),
+    conf_mpfn=round(conf_mpfn, 2)
+  )
+```
+
+## 2021
+
+### Importacion de la data
+
+```{r}
+enapres2021=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/ENAPRES/enapres2021/enapres2021.csv")
+```
+
+```{r}
+#cambio de nombres
+names(enapres2021)=c("Departamento","Provincia","Distrito","PNP","MUNI","PJ","MPFN")
+```
+
+### Cambio a provincias
+
+```{r}
+enapres2021 <- enapres2021 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    conf_pnp = mean(PNP, na.rm = TRUE),
+    conf_muni = mean(MUNI, na.rm = TRUE),
+    conf_pj = mean(PJ, na.rm = TRUE),
+    conf_mpfn = mean(MPFN, na.rm = TRUE)
+  )
+```
+### Redondeo
+
+```{r}
+#Empecemos con 2019
+enapres2021 <- enapres2021 %>%
+  mutate(
+    conf_pnp = round(conf_pnp, 2),              
+    conf_muni = round(conf_muni, 2),       
+    conf_pj = round(conf_pj, 2),
+    conf_mpfn=round(conf_mpfn, 2)
+  )
+```
+
+## 2022
+
+### Importacion de la data
+
+```{r}
+enapres2022=import("~/Tesis_de_Licenciatura/Extortion_Peru/data/ENAPRES/enapres2022/enapres2022.csv")
+```
+
+```{r}
+enapres2022=select(enapres2022, c(2:8))
+#cambio de nombres
+names(enapres2022)=c("Departamento","Provincia","Distrito","PNP","MUNI","PJ","MPFN")
+```
+
+### Cambio a provincias
+
+```{r}
+enapres2022 <- enapres2022 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    conf_pnp = mean(PNP, na.rm = TRUE),
+    conf_muni = mean(MUNI, na.rm = TRUE),
+    conf_pj = mean(PJ, na.rm = TRUE),
+    conf_mpfn = mean(MPFN, na.rm = TRUE)
+  )
+```
+
+### Redondeo
+
+```{r}
+#Empecemos con 2019
+enapres2022 <- enapres2022 %>%
+  mutate(
+    conf_pnp = round(conf_pnp, 2),              
+    conf_muni = round(conf_muni, 2),       
+    conf_pj = round(conf_pj, 2),
+    conf_mpfn=round(conf_mpfn, 2)
+  )
+```
+
+# Proyección poblacional
+
+```{r}
+pob_proy=import("D:/Tesis_de_Licenciatura/Extortion_Peru/data/PROYECCION_POB/proypob_PROVINCIAS.xlsx")
+```
+
+
+## 2019
+
+### Limpieza
+```{r}
+pob2019=select(pob_proy, c(1,3))
+names(pob2019)=c("Provincia","poblacion")
+pob2019=filter(pob2019, !is.na(poblacion))
+```
+
+## 2020
+
+### Limpieza
+```{r}
+pob2020=select(pob_proy, c(1,4))
+names(pob2020)=c("Provincia","poblacion")
+pob2020=filter(pob2020, !is.na(poblacion))
+```
+
+## 2021
+
+### Limpieza
+```{r}
+pob2021=select(pob_proy, c(1,5))
+names(pob2021)=c("Provincia","poblacion")
+pob2021=filter(pob2021, !is.na(poblacion))
+```
+
+## 2022
+
+### Limpieza
+```{r}
+pob2022=select(pob_proy, c(1,6))
+names(pob2022)=c("Provincia","poblacion")
+pob2022=filter(pob2022, !is.na(poblacion))
+```
+
+# Empresas en Perú - Registro obtenido de Ministerio de la Producción
+
+## 2019
+
+### Importacion
+
+```{r}
+empresas2019=import("D:/Tesis_de_Licenciatura/Extortion_Peru/data/EMPRESAS/2019/empresas2019.xlsx")
+```
+
+
+```{r}
+table(empresas2019$Sector)
+```
+### Cambio a provincias
+
+```{r}
+empresas2019 <- empresas2019 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    n_empresas=sum(cantidad, na.rm = TRUE)
+  )
+```
+
+## 2020
+
+```{r}
+empresas2020=import("D:/Tesis_de_Licenciatura/Extortion_Peru/data/EMPRESAS/2020/empresas2020.xlsx")
+```
+
+### Cambio a provincias
+
+```{r}
+empresas2020 <- empresas2020 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    n_empresas=sum(empresas, na.rm = TRUE)
+  )
+```
+
+## 2021
+
+```{r}
+empresas2021=import("D:/Tesis_de_Licenciatura/Extortion_Peru/data/EMPRESAS/2021/empresas2021.xlsx")
+```
+
+### Cambio a provincias
+
+```{r}
+empresas2021 <- empresas2021 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    n_empresas=sum(empresas, na.rm = TRUE)
+  )
+```
+
+## 2022
+
+```{r}
+empresas2022=import("D:/Tesis_de_Licenciatura/Extortion_Peru/data/EMPRESAS/2022/empresas2022.xlsx")
+```
+
+### Cambio a provincias
+
+```{r}
+empresas2022 <- empresas2022 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    n_empresas=sum(cantidad, na.rm = TRUE)
+  )
+```
+
+# SIDPOL
+
+```{r}
+sidpol=import("D:/Tesis_de_Licenciatura/Extortion_Peru/data/SIDPOL/SIDPOL.csv")
+```
+
+## 2019
+
+### Limpieza
+
+```{r}
+sidpol2019=filter(sidpol, ANIO=="2019")
+sidpol2019=select(sidpol2019, c(2,3,5))
+names(sidpol2019)=c("Departamento","Provincia","denuncias")
+```
+
+### Cambio a provincias
+
+```{r}
+sidpol2019 <- sidpol2019 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    denuncias =sum(denuncias, na.rm = TRUE)
+  )
+```
+
+## 2020
+
+### Limpieza
+
+```{r}
+sidpol2020=filter(sidpol, ANIO=="2020")
+sidpol2020=select(sidpol2020, c(2,3,5))
+names(sidpol2020)=c("Departamento","Provincia","denuncias")
+```
+
+### Cambio a provincias
+
+```{r}
+sidpol2020 <- sidpol2020 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    denuncias =sum(denuncias, na.rm = TRUE)
+  )
+```
+
+## 2021
+
+### Limpieza
+
+```{r}
+sidpol2021=filter(sidpol, ANIO=="2021")
+sidpol2021=select(sidpol2021, c(2,3,5))
+names(sidpol2021)=c("Departamento","Provincia","denuncias")
+```
+
+### Cambio a provincias
+
+```{r}
+sidpol2021 <- sidpol2021 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    denuncias =sum(denuncias, na.rm = TRUE)
+  )
+```
+
+## 2022
+
+### Limpieza
+
+```{r}
+sidpol2022=filter(sidpol, ANIO=="2022")
+sidpol2022=select(sidpol2022, c(2,3,5))
+names(sidpol2022)=c("Departamento","Provincia","denuncias")
+```
+
+### Cambio a provincias
+
+```{r}
+sidpol2022 <- sidpol2022 %>%
+  group_by(Departamento, Provincia) %>%
+  summarise(
+    denuncias =sum(denuncias, na.rm = TRUE)
+  )
+```
+
+# FUUUUUUUSION
+
+## Unir todo 2019
+
+### SIUP y ENAPRES
+
+```{r}
+pre2019_1=full_join(SIUP2019, enapres2019, by="Provincia")
+pre2019_1=select(pre2019_1, c(1:15,18:21))
+pre2019_1<-mice(pre2019_1,m=5,method = 'pmm')
+pre2019_1=complete(pre2019_1)
+```
+
+### LO ANTERIOR MÁS PROYECCION POBLACIONAL
+
+```{r}
+setdiff(SIUP2019$Provincia, pob2019$Provincia)
+```
+
+#### Revision para el merge
+```{r}
+#ajustes previos
+pob2019[pob2019$Provincia=='CAÑETE','Provincia']='CANETE'
+pob2019[pob2019$Provincia=='MARAÑON','Provincia']='MARANON'
+pob2019[pob2019$Provincia=='FERREÑAFE','Provincia']='FERRENAFE'
+pob2019[pob2019$Provincia=='LIMA METROPOLITANA','Provincia']='LIMA'
+pob2019[pob2019$Provincia=='DATEM DEL MARAÑON','Provincia']='DATEM DEL MARANON'
+```
+
+
+```{r}
+pre2019_2=merge(pre2019_1, pob2019)
+```
+
+### AHORA LE AÑADO LA CANTIDAD DE EMPRESAS
+
+#### Revision para el merge
+
+```{r}
+setdiff(pre2019_2$Provincia, empresas2019$Provincia)
+```
+```{r}
+#ajustes previos
+empresas2019[empresas2019$Provincia=='CAÑ‘ETE','Provincia']='CANETE'
+empresas2019[empresas2019$Provincia=='MARAÑ‘ON','Provincia']='MARANON'
+empresas2019[empresas2019$Provincia=='FERREÑ‘AFE','Provincia']='FERRENAFE'
+empresas2019[empresas2019$Provincia=='DATEM DEL MARAÑ‘ON','Provincia']='DATEM DEL MARANON'
+```
+
+```{r}
+pre2019_3=merge(pre2019_2, empresas2019)
+```
+
+### FINAL 2019
+
+```{r}
+data_2019=full_join(pre2019_3, sidpol2019, by="Provincia")
+data_2019=select(data_2019, c(2,1,3:20,22,24))
+data_2019=data_2019 %>%
+  mutate(
+    denuncias=replace_na(denuncias, 0)
+  )
+```
+
+## UNIR TODO 2020
+
+### SIUP y ENAPRES
+
+#### Preparativos
+
+```{r}
+SIUP2020[SIUP2020$Provincia=='NAZCA','Provincia']='NASCA'
+```
+
+```{r}
+setdiff(enapres2020$Provincia, SIUP2020$Provincia)
+```
+#### Merge
+
+```{r}
+pre2020_1=full_join(SIUP2020, enapres2020, by="Provincia")
+pre2020_1=select(pre2020_1, c(1:15,18:21))
+pre2020_1<-mice(pre2020_1,m=5,method = 'pmm')
+pre2020_1=complete(pre2020_1)
+```
+
+
+### LO ANTERIOR MÁS PROYECCION POBLACIONAL
+
+#### Preparativos
+
+```{r}
+setdiff(pob2020$Provincia, pre2020_1$Provincia)
+```
+#### Cambio de nombres
+```{r}
+#ajustes previos
+pob2020[pob2020$Provincia=='CAÑETE','Provincia']='CANETE'
+pob2020[pob2020$Provincia=='MARAÑON','Provincia']='MARANON'
+pob2020[pob2020$Provincia=='FERREÑAFE','Provincia']='FERRENAFE'
+pob2020[pob2020$Provincia=='LIMA METROPOLITANA','Provincia']='LIMA'
+pob2020[pob2020$Provincia=='DATEM DEL MARAÑON','Provincia']='DATEM DEL MARANON'
+```
+
+#### Merge
+
+```{r}
+pre2020_2=full_join(pob2020, pre2020_1, by="Provincia")
+pre2020_2=select(pre2020_2, c(1,3,4:20,2))
+pre2020_2<-mice(pre2020_2,m=5,method = 'pmm')
+pre2020_2=complete(pre2020_2)
+```
+
+### TOCA PONER EMPRESAS
+
+#### Preparativos
+
+```{r}
+setdiff(pre2020_2$Provincia, empresas2020$Provincia)
+```
+```{r}
+#ajustes previos
+empresas2020[empresas2020$Provincia=='CAÑ‘ETE','Provincia']='CANETE'
+empresas2020[empresas2020$Provincia=='MARAÑ‘ON','Provincia']='MARANON'
+empresas2020[empresas2020$Provincia=='FERREÑ‘AFE','Provincia']='FERRENAFE'
+empresas2020[empresas2020$Provincia=='DATEM DEL MARAÑ‘ON','Provincia']='DATEM DEL MARANON'
+```
+
+```{r}
+pre2020_3=merge(pre2020_2, empresas2020)
+```
+
+### FINAL 2020
+
+#### PREPARATIVOS
+
+```{r}
+setdiff(sidpol2020$Provincia, pre2020_3$Provincia)
+```
+#### Merge
+
+```{r}
+data_2020=full_join(pre2020_3, sidpol2020, by="Provincia")
+data_2020=select(data_2020,c(2,1,3:20,22,24))
+data_2020=data_2020 %>%
+  mutate(
+    denuncias=replace_na(denuncias, 0)
+  )
+```
+
+## UNIR TODO 2021
+
+### SIUP+ENAPRES
+
+#### Preparativos
+
+```{r}
+setdiff(enapres2021$Provincia, SIUP2021$Provincia)
+```
+
+#### Merge
+
+```{r}
+pre2021_1=full_join(SIUP2021, enapres2021, by="Provincia")
+pre2021_1=select(pre2021_1, c(1:15,18:21))
+pre2021_1<-mice(pre2021_1,m=5,method = 'pmm')
+pre2021_1=complete(pre2021_1)
+```
+
+### LO ANTERIOR + PROYECCION POBLACIONAL
+
+```{r}
+setdiff(pre2021_1$Provincia, pob2021$Provincia)
+```
+#### Cambio de nombres
+```{r}
+#ajustes previos
+pob2021[pob2021$Provincia=='CAÑETE','Provincia']='CANETE'
+pob2021[pob2021$Provincia=='MARAÑON','Provincia']='MARANON'
+pob2021[pob2021$Provincia=='FERREÑAFE','Provincia']='FERRENAFE'
+pob2021[pob2021$Provincia=='LIMA METROPOLITANA','Provincia']='LIMA'
+pob2021[pob2021$Provincia=='DATEM DEL MARAÑON','Provincia']='DATEM DEL MARANON'
+```
+
+```{r}
+pre2021_2=merge(pre2021_1, pob2021)
+```
+
+### EMPRESAS
+
+```{r}
+setdiff(empresas2021$Provincia, pre2021_2$Provincia)
+```
+#### Cambio de palabras
+```{r}
+#ajustes previos
+empresas2021[empresas2021$Provincia=='CAÑ‘ETE','Provincia']='CANETE'
+empresas2021[empresas2021$Provincia=='MARAÑON','Provincia']='MARANON'
+empresas2021[empresas2021$Provincia=='FERREÑ‘AFE','Provincia']='FERRENAFE'
+empresas2021[empresas2021$Provincia=='DATEM DEL MARAÑ‘ON','Provincia']='DATEM DEL MARANON'
+```
+
+#### Merge
+
+```{r}
+pre2021_3=merge(pre2021_2, empresas2021)
+```
+
+### FINAL 2021
+
+```{r}
+setdiff(sidpol2021$Provincia, pre2021_3$Provincia)
+```
+
+#### Merge
+
+```{r}
+data_2021=full_join(pre2021_3, sidpol2021, by="Provincia")
+data_2021=select(data_2021, c(2,1,3:20,22,24))
+data_2021=data_2021 %>%
+  mutate(
+    denuncias=replace_na(denuncias, 0)
+  )
+```
+
+## UNIR TODO 2022
+
+### SIUP + ENAPRES
+
+#### PREPARATIVOS
+
+```{r}
+setdiff(enapres2022$Provincia, SIUP2022$Provincia)
+```
+
+```{r}
+setdiff(SIUP2022$Provincia, data_2021$Provincia)
+```
+
+
+#### CAMBIO DE NOMBRES
+
+```{r}
+#Cambio en ENAPRES
+enapres2022[enapres2022$Provincia=='CA\xd1ETE','Provincia']='CANETE'
+enapres2022[enapres2022$Provincia=='MARA\xd1ON','Provincia']='MARANON'
+enapres2022[enapres2022$Provincia=='FERRE\xd1AFE','Provincia']='FERRENAFE'
+enapres2022[enapres2022$Provincia=='NAZCA','Provincia']='NASCA'
+```
+
+```{r}
+#CAMBIO EN SIUP
+SIUP2022[SIUP2022$Provincia=='CAÑETE','Provincia']='CANETE'
+SIUP2022[SIUP2022$Provincia=='MARAÑON','Provincia']='MARANON'
+SIUP2022[SIUP2022$Provincia=='FERREÑAFE','Provincia']='FERRENAFE'
+SIUP2022[SIUP2022$Provincia=='DATEM DEL MARAÑON','Provincia']='DATEM DEL MARANON'
+SIUP2022[SIUP2022$Provincia=='NAZCA','Provincia']='NASCA'
+```
+
+```{r}
+pre2022_1=full_join(SIUP2022, enapres2022, by="Provincia")
+pre2022_1=select(pre2022_1, c(1:15,18:21))
+```
+
+### UNIR PROYECCION
+
+```{r}
+setdiff(pre2022_1$Provincia, pob2022$Provincia)
+```
+```{r}
+#ajustes previos
+pob2022[pob2022$Provincia=='CAÑETE','Provincia']='CANETE'
+pob2022[pob2022$Provincia=='MARAÑON','Provincia']='MARANON'
+pob2022[pob2022$Provincia=='FERREÑAFE','Provincia']='FERRENAFE'
+pob2022[pob2022$Provincia=='LIMA METROPOLITANA','Provincia']='LIMA'
+pob2022[pob2022$Provincia=='DATEM DEL MARAÑON','Provincia']='DATEM DEL MARANON'
+```
+
+#### Merge
+
+```{r}
+pre2022_2=merge(pre2022_1, pob2022)
+```
+
+### UNIR EMPRESAS
+
+```{r}
+setdiff(pre2022_2$Provincia, empresas2022$Provincia)
+```
+
+```{r}
+setdiff(empresas2022$Provincia, pre2022_2$Provincia)
+```
+#### Cambio de nombres
+
+```{r}
+#ajustes previos
+empresas2022[empresas2022$Provincia=='CA?ETE','Provincia']='CANETE'
+empresas2022[empresas2022$Provincia=='MARA?ON','Provincia']='MARANON'
+empresas2022[empresas2022$Provincia=='FERRE?AFE','Provincia']='FERRENAFE'
+empresas2022[empresas2022$Provincia=='CARLOS F. FITZCARRALD','Provincia']='CARLOS FERMIN FITZCARRALD'
+empresas2022[empresas2022$Provincia=='DATEM DEL MARA?ON','Provincia']='DATEM DEL MARANON'
+empresas2022[empresas2022$Provincia=='NAZCA','Provincia']='NASCA'
+empresas2022[empresas2022$Provincia=='PROV. CONST. DEL CALLAO','Provincia']='CALLAO'
+```
+
+#### MERGE
+
+```{r}
+pre2022_3=merge(pre2022_2, empresas2022)
+```
+
+### SIDPOL
+
+```{r}
+setdiff(sidpol2022$Provincia, pre2022_3$Provincia)
+```
+
+```{r}
+data_2022=full_join(pre2022_3, sidpol2022, by="Provincia")
+data_2022=select(data_2022, c(2,1,3:20,22,24))
+data_2022=data_2022 %>%
+  mutate(
+    denuncias=replace_na(denuncias, 0)
+  )
+```
+
+
+# UNION VERTICAL
+
+```{r}
+data_pre_1 <- rbind(data_2019, data_2020)
+```
+
+```{r}
+data_pre2=rbind(data_pre_1, data_2021)
+```
+
+```{r}
+datafinal=rbind(data_pre2, data_2022)
+```
+
+### ARREGLO FINAL
+
+```{r}
+datafinal<-mice(datafinal,m=5,method = 'pmm')
+datafinal=complete(datafinal)
+```
+
+
+```{r}
+export(datafinal, "datafinal.xlsx")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
